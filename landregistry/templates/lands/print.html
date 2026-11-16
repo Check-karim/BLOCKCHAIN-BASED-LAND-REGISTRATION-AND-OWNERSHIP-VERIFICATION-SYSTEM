@@ -1,0 +1,44 @@
+{% extends "app_layout.html" %}
+{% from "macros.html" import badge with context %}
+{% block title %}Print {{ land.upi }}{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Land record</p>
+    <h1>{{ land.upi }}</h1>
+    <p>{{ land.title_number }} · {{ land.owner_name }}</p>
+  </div>
+  <div class="hero-actions no-print">
+    <button class="btn btn-primary" type="button" onclick="window.print()">Print</button>
+    <a class="btn btn-ghost" href="{{ url_for('lands.detail', land_id=land.id) }}">Back</a>
+  </div>
+</header>
+{% if comparison.matched %}
+  <div class="result-panel verified"><strong>Verified.</strong> The record hash matches the ledger.</div>
+{% else %}
+  <div class="result-panel mismatch"><strong>Not verified.</strong> The record hash does not match the ledger.</div>
+{% endif %}
+<article class="card">
+  <dl class="kv">
+    <div><dt>Owner</dt><dd>{{ land.owner_name }}</dd></div>
+    <div><dt>Use</dt><dd>{{ land.land_use }}</dd></div>
+    <div><dt>Size</dt><dd>{{ land.size_sqm|sqm }}</dd></div>
+    <div><dt>Status</dt><dd>{{ land.status|label }}</dd></div>
+    <div class="wide"><dt>Place</dt><dd>{{ land.village }}, {{ land.cell }}, {{ land.sector }}, {{ land.district }}, {{ land.province }}</dd></div>
+    <div><dt>Record hash</dt><dd class="hash">{{ comparison.record_hash }}</dd></div>
+    <div><dt>Ledger hash</dt><dd class="hash">{{ comparison.chain_hash or '—' }}</dd></div>
+  </dl>
+</article>
+<section class="section">
+  <h2>Registration history</h2>
+  <ol class="timeline">
+    {% for event in events %}
+      <li>
+        <strong>{{ event.event_type|label }}</strong>
+        <span>{{ event.created_at|when }} · {{ event.actor_name }}</span>
+        {% if event.legal_reference %}<p>{{ event.legal_basis }} {{ event.legal_reference }}</p>{% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+</section>
+{% endblock %}

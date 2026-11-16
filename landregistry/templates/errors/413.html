@@ -1,0 +1,10 @@
+{% extends "public_layout.html" %}
+{% block title %}File too large{% endblock %}
+{% block content %}
+<section class="page-intro">
+  <p class="eyebrow">413</p>
+  <h1>That file is too large.</h1>
+  <p class="lede">Upload a PDF, PNG, or JPG of 5 MB or less.</p>
+  <a class="btn btn-primary" href="{{ url_for('public.home') }}">Home</a>
+</section>
+{% endblock %}

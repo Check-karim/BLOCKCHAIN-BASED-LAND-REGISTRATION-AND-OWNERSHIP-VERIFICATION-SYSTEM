@@ -1,0 +1,42 @@
+{% extends "app_layout.html" %}
+{% from "macros.html" import field, csrf, location_fields with context %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Account</p>
+    <h1>Your profile</h1>
+    <p>{{ current_user.username }} · {{ current_user.role|label }}</p>
+  </div>
+</header>
+<div class="split">
+  <form class="card form-card" method="post" novalidate>
+    {{ csrf() }}
+    <h2>Contact details</h2>
+    <div class="form-grid">
+      {{ field('full_name', 'Full name', form.get('full_name', ''), 'text', 'Letters and spaces only.') }}
+      {{ field('email', 'Email', form.get('email', ''), 'email') }}
+      {{ field('phone', 'Phone number', form.get('phone', ''), 'text', 'Example: 0781234567 or +250781234567.') }}
+      {{ field('national_id', 'National ID', form.get('national_id', ''), 'text', '16 digits. Required for landowners.') }}
+      {{ location_fields(form.get('province', ''), form.get('district', '')) }}
+    </div>
+    <button class="btn btn-primary" type="submit">Save profile</button>
+  </form>
+  {% if current_user.username == 'admin' %}
+    <article class="card">
+      <h2>Password</h2>
+      <p>The predefined administrator signs in with username <strong>admin</strong> and password <strong>admin</strong>. That password is kept as issued.</p>
+    </article>
+  {% else %}
+    <form class="card form-card" method="post" action="{{ url_for('dashboard.profile_password') }}" novalidate>
+      {{ csrf() }}
+      <h2>Password</h2>
+      <p class="hint-block">A new password must not be less than 6 characters.</p>
+      {{ field('current_password', 'Current password', '', 'password', '', 'current-password') }}
+      {{ field('password', 'New password', '', 'password', 'Must not be less than 6 characters.', 'new-password') }}
+      {{ field('confirm_password', 'Confirm new password', '', 'password', '', 'new-password') }}
+      <button class="btn btn-gold" type="submit">Update password</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

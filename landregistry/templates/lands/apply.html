@@ -1,0 +1,37 @@
+{% extends "app_layout.html" %}
+{% from "macros.html" import field, area, select, csrf, location_fields with context %}
+{% block title %}Add land{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Your land</p>
+    <h1>Add land</h1>
+    <p>Describe the parcel. An authorized land official checks it. The UPI and the title are created only after that approval.</p>
+  </div>
+</header>
+{% if errors %}
+  <div class="alert error">Check the highlighted fields. The application was not submitted.</div>
+{% endif %}
+<form class="card form-card" method="post" enctype="multipart/form-data" novalidate>
+  {{ csrf() }}
+  <div class="form-grid">
+    {{ select('land_use', 'Land use', land_uses, form.get('land_use', '')) }}
+    {{ field('size_sqm', 'Size (square metres)', form.get('size_sqm', ''), 'text', 'Example: 450 or 450.5') }}
+    {{ location_fields(form.get('province', ''), form.get('district', '')) }}
+    {{ field('sector', 'Sector', form.get('sector', ''), 'text', 'Letters and spaces only.') }}
+    {{ field('cell', 'Cell', form.get('cell', ''), 'text', 'Letters and spaces only.') }}
+    {{ field('village', 'Village', form.get('village', ''), 'text', 'Letters and spaces only.') }}
+    {{ area('description', 'Description', form.get('description', ''), 'Optional note about the parcel.') }}
+    <label class="field">
+      <span>Supporting document</span>
+      <input type="file" name="document" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg">
+      <small>Optional. PDF, PNG, or JPG, up to 5 MB. The official can open it while reviewing.</small>
+      {% if errors.get('document') %}<em>{{ errors.document }}</em>{% endif %}
+    </label>
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Submit for approval</button>
+    <a class="btn btn-ghost" href="{{ url_for('lands.list_lands') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

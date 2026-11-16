@@ -1,0 +1,123 @@
+{% extends "app_layout.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Exports</p>
+    <h1>Reports</h1>
+    <p>
+      {% if current_user.role == 'landowner' %}
+        These reports list only your land, including an application that is still waiting for a UPI. Download the same selection as PDF or CSV.
+      {% else %}
+        Preview a filtered report, then download the same selection as PDF or CSV.
+      {% endif %}
+    </p>
+  </div>
+  <div class="hero-actions">
+    <a class="btn btn-primary" href="{{ url_for('reports.export', report_name=selected, fmt='pdf') }}{% if download_query %}?{{ download_query }}{% endif %}">Download PDF</a>
+    <a class="btn btn-gold" href="{{ url_for('reports.export', report_name=selected, fmt='csv') }}{% if download_query %}?{{ download_query }}{% endif %}">Download CSV</a>
+  </div>
+</header>
+<form class="filters" method="get">
+  <label class="field">
+    <span>Report</span>
+    <select name="report">
+      {% for key, title in choices %}
+        <option value="{{ key }}" {% if key == selected %}selected{% endif %}>{{ title }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="field grow">
+    <span>Search</span>
+    <input type="text" name="q" value="{{ filters.q }}">
+  </label>
+  {% if selected != 'activity' %}
+    <label class="field">
+      <span>Province</span>
+      <select name="province" data-province data-allow-all="true">
+        <option value="">All provinces</option>
+        {% for name in locations %}
+          <option value="{{ name }}" {% if filters.province == name %}selected{% endif %}>{{ name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="field">
+      <span>District</span>
+      <select name="district" data-district>
+        <option value="">All districts</option>
+        {% for province, districts in locations.items() %}
+          {% for name in districts %}
+            <option data-province="{{ province }}" value="{{ name }}" {% if filters.district == name %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        {% endfor %}
+      </select>
+    </label>
+  {% endif %}
+  {% if statuses %}
+    <label class="field">
+      <span>Status</span>
+      <select name="status">
+        <option value="">Any</option>
+        {% for value, label in statuses %}
+          <option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  {% endif %}
+  {% if selected in ['parcels', 'ownership'] %}
+    <label class="field">
+      <span>Use</span>
+      <select name="land_use">
+        <option value="">Any use</option>
+        {% for use in land_uses %}
+          <option value="{{ use }}" {% if filters.land_use == use %}selected{% endif %}>{{ use }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  {% endif %}
+  {% if selected == 'users' %}
+    <label class="field">
+      <span>Role</span>
+      <select name="role">
+        <option value="">Any role</option>
+        {% for key, label in role_labels.items() %}
+          <option value="{{ key }}" {% if filters.role == key %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  {% endif %}
+  <label class="field">
+    <span>From</span>
+    <input type="date" name="date_from" value="{{ filters.date_from }}">
+  </label>
+  <label class="field">
+    <span>To</span>
+    <input type="date" name="date_to" value="{{ filters.date_to }}">
+  </label>
+  <button class="btn btn-primary" type="submit">Apply</button>
+</form>
+<p class="hint-block">Showing {{ report.shown }} of {{ report.total }}. The download includes the full filtered set, up to 5,000 rows.</p>
+{% if report.rows %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>{% for header in report.headers %}<th>{{ header }}</th>{% endfor %}</tr>
+      </thead>
+      <tbody>
+        {% for row in report.rows %}
+          <tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="empty">
+    <h2>No rows</h2>
+    {% if current_user.role == 'landowner' %}
+      <p>Nothing matches these filters. <a href="{{ url_for('lands.new_land') }}">Add land</a> if you have not submitted a parcel yet.</p>
+    {% else %}
+      <p>Nothing matches these filters.</p>
+    {% endif %}
+  </div>
+{% endif %}
+{% endblock %}

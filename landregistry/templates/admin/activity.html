@@ -1,0 +1,44 @@
+{% extends "app_layout.html" %}
+{% from "macros.html" import pager with context %}
+{% block title %}Activity{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Monitor</p>
+    <h1>System activity</h1>
+    <p>{{ total }} logged event{{ '' if total == 1 else 's' }}.</p>
+  </div>
+</header>
+<div class="chips">
+  {% for item in summary %}
+    <span><strong>{{ item.total }}</strong> {{ item.action|label }}</span>
+  {% endfor %}
+</div>
+<form class="filters" method="get">
+  <label class="field grow">
+    <span>Search</span>
+    <input type="text" name="q" value="{{ query }}" placeholder="Person, action, or detail">
+  </label>
+  <button class="btn btn-primary" type="submit">Filter</button>
+</form>
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>When</th><th>Person</th><th>Action</th><th>Details</th><th>Record</th><th>IP</th></tr></thead>
+    <tbody>
+      {% for row in rows %}
+        <tr>
+          <td>{{ row.created_at|when }}</td>
+          <td>{{ row.person or 'System' }}{% if row.username %}<small> {{ row.username }}</small>{% endif %}</td>
+          <td>{{ row.action|label }}</td>
+          <td>{{ row.details }}</td>
+          <td>{% if row.entity_type %}{{ row.entity_type|label }}{% if row.entity_id %} #{{ row.entity_id }}{% endif %}{% else %}—{% endif %}</td>
+          <td>{{ row.ip_address or '—' }}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="6">No activity matches this search.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{{ pager(page, pages, filter_query) }}
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "layout.html" %}
+{% block body %}
+<div class="app-shell">
+  <aside class="sidebar">
+    {% include "brand.html" %}
+    <button class="nav-toggle" type="button" data-nav-toggle>Menu</button>
+    {% if current_user %}
+    <nav class="side-links" data-nav>
+      <a class="side-link {% if request.endpoint == 'dashboard.home' %}is-active{% endif %}" href="{{ url_for('dashboard.home') }}">Dashboard</a>
+      <a class="side-link {% if request.endpoint in ['lands.list_lands', 'lands.detail', 'lands.update_land', 'lands.print_record'] %}is-active{% endif %}" href="{{ url_for('lands.list_lands') }}">{{ 'My land' if current_user.role == 'landowner' else 'Parcels' }}</a>
+      {% if current_user.role == 'landowner' %}
+        <a class="side-link {% if request.endpoint == 'lands.new_land' %}is-active{% endif %}" href="{{ url_for('lands.new_land') }}">Add land</a>
+      {% endif %}
+      {% if current_user.role == 'official' or current_user.role == 'admin' %}
+        <a class="side-link {% if request.endpoint == 'lands.approvals' %}is-active{% endif %}" href="{{ url_for('lands.approvals') }}">Approvals</a>
+      {% endif %}
+      {% if current_user.role == 'official' %}
+        <a class="side-link {% if request.endpoint in ['ownership.reviews', 'ownership.review'] %}is-active{% endif %}" href="{{ url_for('ownership.reviews') }}">Review mismatches</a>
+      {% endif %}
+      {% if current_user.role == 'admin' %}
+        <a class="side-link {% if request.endpoint in ['admin.users', 'admin.new_user', 'admin.user_detail'] %}is-active{% endif %}" href="{{ url_for('admin.users') }}">Users</a>
+        <a class="side-link {% if request.endpoint == 'admin.activity' %}is-active{% endif %}" href="{{ url_for('admin.activity') }}">Audit log</a>
+        <a class="side-link {% if request.endpoint == 'ownership.reviews' %}is-active{% endif %}" href="{{ url_for('ownership.reviews') }}">Flagged reviews</a>
+      {% endif %}
+      {% if current_user.role != 'landowner' %}
+        <a class="side-link {% if request.endpoint == 'admin.ledger' %}is-active{% endif %}" href="{{ url_for('admin.ledger') }}">Ledger</a>
+        <a class="side-link {% if request.endpoint == 'admin.minaloc' %}is-active{% endif %}" href="{{ url_for('admin.minaloc') }}">{{ 'MINALOC desk' if current_user.role == 'admin' else 'Policies' }}</a>
+      {% endif %}
+      <a class="side-link {% if request.endpoint == 'reports.index' %}is-active{% endif %}" href="{{ url_for('reports.index') }}">Reports</a>
+      <a class="side-link {% if request.endpoint == 'dashboard.profile' %}is-active{% endif %}" href="{{ url_for('dashboard.profile') }}">Profile</a>
+      <form method="post" action="{{ url_for('public.logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit" class="side-link side-button">Log out</button>
+      </form>
+    </nav>
+    {% endif %}
+  </aside>
+  <div class="workspace">
+    {% if current_user %}
+    <div class="workspace-bar">
+      <div>
+        <p class="eyebrow">{{ current_user.role|label }}</p>
+        <strong>{{ current_user.full_name }}</strong>
+      </div>
+      <span class="badge {{ current_user.status }}">{{ current_user.district or 'MINALOC' }}</span>
+    </div>
+    {% endif %}
+    <main class="content">
+      {% include "flashes.html" %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

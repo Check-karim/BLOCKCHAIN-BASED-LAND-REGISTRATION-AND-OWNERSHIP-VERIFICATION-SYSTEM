@@ -1,0 +1,10 @@
+{% extends "public_layout.html" %}
+{% block title %}Not allowed{% endblock %}
+{% block content %}
+<section class="page-intro">
+  <p class="eyebrow">403</p>
+  <h1>You do not have access to that page.</h1>
+  <p class="lede">The register shows each role only the records it is meant to handle.</p>
+  <a class="btn btn-primary" href="{{ url_for('dashboard.home') if current_user else url_for('public.home') }}">Continue</a>
+</section>
+{% endblock %}

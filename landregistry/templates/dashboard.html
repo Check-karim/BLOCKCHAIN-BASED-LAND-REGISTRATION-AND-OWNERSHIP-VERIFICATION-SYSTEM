@@ -1,0 +1,116 @@
+{% extends "app_layout.html" %}
+{% from "macros.html" import badge with context %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Overview</p>
+    <h1>Good to see you, {{ current_user.full_name }}.</h1>
+    <p>
+      {% if current_user.role == 'landowner' %}
+        Add your land. An official approves it, and that approval issues the UPI and the title. Reports lists your own parcels and can be downloaded.
+      {% elif current_user.role == 'official' %}
+        Approve land submitted by landowners. Approval issues the UPI and the title.
+      {% else %}
+        Issue official accounts, review the audit log, and prepare reports for the MINALOC desk. Landowners register themselves.
+      {% endif %}
+    </p>
+  </div>
+</header>
+
+{% if current_user.role == 'admin' %}
+  <div class="alert {{ 'success' if chain_ok else 'error' }}">
+    {% if chain_ok %}The ledger chain agrees from the genesis block through the latest seal.{% else %}The ledger chain is broken. Open the ledger and inspect the hashes.{% endif %}
+  </div>
+{% endif %}
+
+<section class="stat-grid inner">
+  {% if current_user.role == 'landowner' %}
+    <article><strong>{{ stats.parcels }}</strong><span>Your parcels</span></article>
+    <article><strong>{{ stats.verified }}</strong><span>Verified</span></article>
+    <article><strong>{{ stats.pending }}</strong><span>Waiting for approval</span></article>
+    <article><strong>{{ stats.titled }}</strong><span>Titles issued</span></article>
+    <article><strong>{{ stats.area|sqm }}</strong><span>Combined area</span></article>
+  {% else %}
+    <article><strong>{{ stats.parcels }}</strong><span>Parcels</span></article>
+    <article><strong>{{ stats.verified }}</strong><span>Verified</span></article>
+    <article><strong>{{ stats.pending }}</strong><span>Waiting for approval</span></article>
+    <article><strong>{{ stats.mismatches }}</strong><span>Flagged mismatches</span></article>
+    <article><strong>{{ stats.owners }}</strong><span>Landowner accounts</span></article>
+    {% if current_user.role == 'admin' %}
+      <article><strong>{{ stats.users }}</strong><span>All users</span></article>
+      <article><strong>{{ stats.blocks }}</strong><span>Blocks</span></article>
+    {% endif %}
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <h2>{{ 'Your land' if current_user.role == 'landowner' else 'Recent parcels' }}</h2>
+    <a href="{{ url_for('lands.list_lands') }}">View all</a>
+  </div>
+  {% if recent_lands %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>UPI</th>
+            <th>Title</th>
+            {% if current_user.role != 'landowner' %}<th>Owner</th>{% endif %}
+            <th>District</th>
+            <th>Use</th>
+            <th>Size</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for land in recent_lands %}
+            <tr>
+              <td><a href="{{ url_for('lands.detail', land_id=land.id) }}">{{ land.upi or 'Awaiting UPI' }}</a></td>
+              <td>{{ land.title_number or '—' }}</td>
+              {% if current_user.role != 'landowner' %}<td>{{ land.owner_name }}</td>{% endif %}
+              <td>{{ land.district }}</td>
+              <td>{{ land.land_use }}</td>
+              <td>{{ land.size_sqm|sqm }}</td>
+              <td>{{ badge(land.status) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty">
+      <h2>No parcels yet</h2>
+      {% if current_user.role == 'landowner' %}
+        <p><a href="{{ url_for('lands.new_land') }}">Add land</a> to send a parcel for approval.</p>
+      {% else %}
+        <p>Land submitted by a landowner will appear here.</p>
+      {% endif %}
+    </div>
+  {% endif %}
+</section>
+
+{% if current_user.role == 'admin' and recent_activity %}
+<section class="section">
+  <div class="section-head">
+    <h2>Recent activity</h2>
+    <a href="{{ url_for('admin.activity') }}">Open the monitor</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>When</th><th>Person</th><th>Action</th><th>Details</th></tr></thead>
+      <tbody>
+        {% for item in recent_activity %}
+          <tr>
+            <td>{{ item.created_at|when }}</td>
+            <td>{{ item.person or 'System' }}</td>
+            <td>{{ item.action|label }}</td>
+            <td>{{ item.details }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "public_layout.html" %}
+{% from "macros.html" import field, csrf, location_fields with context %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<section class="auth-shell">
+  <div class="auth-aside">
+    <p class="eyebrow">Landowner account</p>
+    <h1>Open an account to read your land.</h1>
+    <p>Only a landowner can open an account here. Official accounts are issued by the administrator. The administrator login is already set.</p>
+    <ul class="rule-list">
+      <li>Name cannot contain numbers or special characters.</li>
+      <li>Username cannot contain spaces.</li>
+      <li>Username cannot start with a number or a special character.</li>
+      <li>Use a valid email and a Rwandan phone number.</li>
+      <li>Password must not be less than 6 characters.</li>
+      <li>National ID is 16 digits.</li>
+    </ul>
+  </div>
+  <form class="auth-panel" method="post" novalidate>
+    {{ csrf() }}
+    <h2>Create your account</h2>
+    {% if errors %}
+      <div class="alert error">Check the highlighted fields. The account was not created.</div>
+    {% endif %}
+    <div class="form-grid">
+      {{ field('full_name', 'Full name', form.get('full_name', ''), 'text', 'Letters and spaces only.', 'name') }}
+      {{ field('username', 'Username', form.get('username', ''), 'text', 'Start with a letter. No spaces.', 'username') }}
+      {{ field('email', 'Email', form.get('email', ''), 'email', '', 'email') }}
+      {{ field('phone', 'Phone number', form.get('phone', ''), 'text', 'Example: 0781234567 or +250781234567.', 'tel') }}
+      {{ field('national_id', 'National ID', form.get('national_id', ''), 'text', '16 digits.', 'off') }}
+      {{ location_fields(form.get('province', ''), form.get('district', '')) }}
+      {{ field('password', 'Password', '', 'password', 'Must not be less than 6 characters.', 'new-password') }}
+      {{ field('confirm_password', 'Confirm password', '', 'password', '', 'new-password') }}
+    </div>
+    <button class="btn btn-primary" type="submit">Create account</button>
+    <p class="form-foot">Already registered? <a href="{{ url_for('public.login') }}">Log in</a></p>
+  </form>
+</section>
+{% endblock %}

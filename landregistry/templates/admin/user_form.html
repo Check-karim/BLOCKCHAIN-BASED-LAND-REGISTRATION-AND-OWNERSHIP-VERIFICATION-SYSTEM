@@ -1,0 +1,38 @@
+{% extends "app_layout.html" %}
+{% from "macros.html" import field, csrf, location_fields with context %}
+{% block title %}New official{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Administration</p>
+    <h1>Create an official account</h1>
+    <p>The administrator assigns the authorized land official role. Landowners open their own accounts. The predefined administrator stays admin / admin.</p>
+  </div>
+</header>
+{% if errors %}
+  <div class="alert error">Check the highlighted fields. The account was not created.</div>
+{% endif %}
+<form class="card form-card" method="post" novalidate>
+  {{ csrf() }}
+  <h2>Authorized land official</h2>
+  <ul class="permission-list">
+    {% for duty in duties %}
+      <li>{{ duty }}</li>
+    {% endfor %}
+  </ul>
+  <div class="form-grid">
+    {{ field('full_name', 'Full name', form.get('full_name', ''), 'text', 'Letters and spaces only.') }}
+    {{ field('username', 'Username', form.get('username', ''), 'text', 'Start with a letter. No spaces.') }}
+    {{ field('email', 'Email', form.get('email', ''), 'email') }}
+    {{ field('phone', 'Phone number', form.get('phone', ''), 'text', 'Example: 0781234567 or +250781234567.') }}
+    {{ field('national_id', 'National ID', form.get('national_id', ''), 'text', 'Optional. 16 digits.') }}
+    {{ location_fields(form.get('province', ''), form.get('district', '')) }}
+    {{ field('password', 'Password', '', 'password', 'Must not be less than 6 characters.') }}
+    {{ field('confirm_password', 'Confirm password', '', 'password') }}
+  </div>
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Create official account</button>
+    <a class="btn btn-ghost" href="{{ url_for('admin.users') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

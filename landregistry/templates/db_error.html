@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+{% block title %}Database{% endblock %}
+{% block body %}
+<main class="public-main">
+  <section class="page-intro">
+    <p class="eyebrow">Database</p>
+    <h1>The register cannot reach MySQL.</h1>
+    <p class="lede">Start MySQL from the XAMPP control panel, then refresh this page. The application expects MariaDB on 127.0.0.1 with user root and an empty password.</p>
+    <pre class="error-detail">{{ error }}</pre>
+  </section>
+</main>
+{% endblock %}

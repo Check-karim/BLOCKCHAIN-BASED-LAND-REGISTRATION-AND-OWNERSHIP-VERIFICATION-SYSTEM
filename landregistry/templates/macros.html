@@ -1,0 +1,78 @@
+{% macro csrf() %}
+<input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+{% endmacro %}
+
+{% macro field(name, label, value='', type='text', hint='', autocomplete='') %}
+<label class="field">
+  <span>{{ label }}</span>
+  <input type="{{ type }}" name="{{ name }}" value="{{ value }}" {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}>
+  {% if hint %}<small>{{ hint }}</small>{% endif %}
+  {% if errors is defined and errors.get(name) %}<em>{{ errors.get(name) }}</em>{% endif %}
+</label>
+{% endmacro %}
+
+{% macro area(name, label, value='', hint='') %}
+<label class="field">
+  <span>{{ label }}</span>
+  <textarea name="{{ name }}" rows="4">{{ value }}</textarea>
+  {% if hint %}<small>{{ hint }}</small>{% endif %}
+  {% if errors is defined and errors.get(name) %}<em>{{ errors.get(name) }}</em>{% endif %}
+</label>
+{% endmacro %}
+
+{% macro select(name, label, options, current='', hint='', placeholder='Select') %}
+<label class="field">
+  <span>{{ label }}</span>
+  <select name="{{ name }}">
+    <option value="">{{ placeholder }}</option>
+    {% for opt in options %}
+      {% if opt is string %}
+        <option value="{{ opt }}" {% if opt == current %}selected{% endif %}>{{ opt }}</option>
+      {% else %}
+        <option value="{{ opt[0] }}" {% if opt[0]|string == current|string %}selected{% endif %}>{{ opt[1] }}</option>
+      {% endif %}
+    {% endfor %}
+  </select>
+  {% if hint %}<small>{{ hint }}</small>{% endif %}
+  {% if errors is defined and errors.get(name) %}<em>{{ errors.get(name) }}</em>{% endif %}
+</label>
+{% endmacro %}
+
+{% macro location_fields(province='', district='') %}
+<label class="field">
+  <span>Province</span>
+  <select name="province" data-province>
+    <option value="">Select province</option>
+    {% for name in locations %}
+      <option value="{{ name }}" {% if name == province %}selected{% endif %}>{{ name }}</option>
+    {% endfor %}
+  </select>
+  {% if errors is defined and errors.get('province') %}<em>{{ errors.province }}</em>{% endif %}
+</label>
+<label class="field">
+  <span>District</span>
+  <select name="district" data-district>
+    <option value="">Select district</option>
+    {% for prov, districts in locations.items() %}
+      {% for name in districts %}
+        <option data-province="{{ prov }}" value="{{ name }}" {% if name == district %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    {% endfor %}
+  </select>
+  {% if errors is defined and errors.get('district') %}<em>{{ errors.district }}</em>{% endif %}
+</label>
+{% endmacro %}
+
+{% macro pager(page, pages, filter_query='') %}
+{% if pages > 1 %}
+<nav class="pager" aria-label="Pages">
+  {% if page > 1 %}<a href="?page={{ page - 1 }}{% if filter_query %}&{{ filter_query }}{% endif %}">Previous</a>{% endif %}
+  <span>Page {{ page }} of {{ pages }}</span>
+  {% if page < pages %}<a href="?page={{ page + 1 }}{% if filter_query %}&{{ filter_query }}{% endif %}">Next</a>{% endif %}
+</nav>
+{% endif %}
+{% endmacro %}
+
+{% macro badge(value) %}
+<span class="badge {{ value }}">{{ value|label }}</span>
+{% endmacro %}

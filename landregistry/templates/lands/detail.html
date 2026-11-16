@@ -1,0 +1,243 @@
+{% extends "app_layout.html" %}
+{% from "macros.html" import badge, csrf, area with context %}
+{% block title %}{{ land.upi or 'Application' }}{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">{% if land.upi %}Parcel{% else %}Application{% endif %}</p>
+    <h1>{{ land.upi or 'Waiting for approval' }}</h1>
+    <p>
+      {% if land.upi %}
+        Title {{ land.title_number }}
+        {% if land.approver_name %} · approved by {{ land.approver_name }}{% else %} · recorded {{ land.created_at|when }}{% endif %}
+      {% else %}
+        Submitted {{ land.created_at|when }} by {{ land.owner_name }}. The UPI and title are issued when an official approves this application.
+      {% endif %}
+    </p>
+  </div>
+  <div class="hero-actions">
+    {{ badge(land.status) }}
+    {% if land.upi %}
+      <a class="btn btn-ghost" href="{{ url_for('lands.print_record', land_id=land.id) }}">Print</a>
+      <a class="btn btn-ghost" href="{{ url_for('lands.certificate', land_id=land.id) }}">Download extract</a>
+      {% if current_user.role == 'official' %}
+        <a class="btn btn-primary" href="{{ url_for('lands.update_land', land_id=land.id) }}">Update record</a>
+        {% if open_review %}
+          <a class="btn btn-gold" href="{{ url_for('ownership.review', request_id=open_review.id) }}">Review mismatch</a>
+        {% endif %}
+      {% endif %}
+    {% endif %}
+  </div>
+</header>
+
+{% if land.status == 'pending_approval' %}
+  <div class="alert info">This land is waiting for an authorized land official. Approval generates the UPI and the title, then seals the parcel.</div>
+{% elif land.status == 'rejected' %}
+  <div class="alert error"><strong>Rejected.</strong> {{ land.rejection_note }} No UPI or title was issued.</div>
+{% endif %}
+
+{% if land.application_file and not documents %}
+  <p><a href="{{ url_for('lands.application_file', land_id=land.id) }}">{{ land.application_file_name or 'Supporting document' }}</a></p>
+{% endif %}
+
+{% if current_user.role == 'official' and land.status == 'pending_approval' %}
+  <section class="split">
+    <form class="card form-card" method="post" action="{{ url_for('lands.approve_land', land_id=land.id) }}">
+      {{ csrf() }}
+      <h2>Approve</h2>
+      <p>This issues a new UPI and a title number, then writes the registration onto the ledger.</p>
+      <button class="btn btn-primary" type="submit">Approve and issue UPI</button>
+    </form>
+    <form class="card form-card" method="post" action="{{ url_for('lands.reject_land', land_id=land.id) }}" novalidate>
+      {{ csrf() }}
+      <h2>Reject</h2>
+      {{ area('notes', 'Reason', '', 'At least 10 characters. The landowner sees this.') }}
+      <button class="btn btn-danger" type="submit">Reject application</button>
+    </form>
+  </section>
+{% elif current_user.role == 'admin' and land.status == 'pending_approval' %}
+  <div class="alert info">An authorized land official approves this application and issues the UPI and title.</div>
+{% endif %}
+
+{% if land.upi and comparison and comparison.matched %}
+  <div class="result-panel verified">
+    <strong>Register and ledger match.</strong>
+    <p>The current record hash agrees with the hash sealed in the latest registration or correction.</p>
+  </div>
+{% elif land.upi and comparison %}
+  <div class="result-panel mismatch">
+    <strong>Hash mismatch.</strong>
+    <p>The current record does not match the hash sealed on the ledger. A landowner can request an official review.</p>
+    {% if seal and seal.body.size_sqm %}
+      <p>Sealed size {{ seal.body.size_sqm }} m². Register size {{ land.size_sqm|sqm }}.</p>
+    {% endif %}
+  </div>
+{% endif %}
+
+<section class="split">
+  <article class="card">
+    <h2>Land</h2>
+    <dl class="kv">
+      <div><dt>Use</dt><dd>{{ land.land_use }}</dd></div>
+      <div><dt>Size</dt><dd>{{ land.size_sqm|sqm }}</dd></div>
+      <div><dt>Province</dt><dd>{{ land.province }}</dd></div>
+      <div><dt>District</dt><dd>{{ land.district }}</dd></div>
+      <div><dt>Sector</dt><dd>{{ land.sector }}</dd></div>
+      <div><dt>Cell</dt><dd>{{ land.cell }}</dd></div>
+      <div><dt>Village</dt><dd>{{ land.village }}</dd></div>
+      <div class="wide"><dt>Description</dt><dd>{{ land.description or 'No description recorded.' }}</dd></div>
+    </dl>
+  </article>
+  <article class="card">
+    <h2>Owner</h2>
+    <dl class="kv">
+      <div><dt>Name</dt><dd>{{ land.owner_name }}</dd></div>
+      <div><dt>Phone</dt><dd>{{ land.owner_phone }}</dd></div>
+      <div><dt>Email</dt><dd>{{ land.owner_email }}</dd></div>
+      <div><dt>National ID</dt><dd>{{ land.owner_national_id or 'Not recorded' }}</dd></div>
+      <div><dt>Updated</dt><dd>{{ land.updated_at|when }}</dd></div>
+    </dl>
+  </article>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>History</h2></div>
+  <ol class="timeline">
+    {% for event in events %}
+      <li>
+        <strong>{{ event.event_type|label }}</strong>
+        <span>{{ event.created_at|when }} · {{ event.actor_name }}</span>
+        <p>
+          {% if event.old_owner_name %}From {{ event.old_owner_name }} to {{ event.new_owner_name }}.{% elif event.new_owner_name %}Owner: {{ event.new_owner_name }}.{% endif %}
+          {% if event.legal_reference %} {{ event.legal_basis }} {{ event.legal_reference }}.{% endif %}
+        </p>
+        {% if event.notes %}<p>{{ event.notes }}</p>{% endif %}
+        <code title="{{ event.block_hash }}">{{ event.block_hash|short_hash }}</code>
+      </li>
+    {% endfor %}
+  </ol>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Verification</h2></div>
+  {% if verifications %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>When</th><th>Result</th><th>Officer</th><th>Notes</th><th>Block</th></tr></thead>
+        <tbody>
+          {% for item in verifications %}
+            <tr>
+              <td>{{ item.created_at|when }}</td>
+              <td>{{ badge(item.result) }}</td>
+              <td>{{ item.officer_name }}</td>
+              <td>{{ item.notes }}</td>
+              <td><code title="{{ item.block_hash }}">{{ item.block_hash|short_hash }}</code></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty"><h2>No verification yet</h2><p>An officer can confirm or dispute this ownership.</p></div>
+  {% endif %}
+  {% if current_user.role == 'official' %}
+    <form class="card form-card" method="post" action="{{ url_for('lands.verify_land', land_id=land.id) }}" novalidate>
+      {{ csrf() }}
+      <h2>Record a verification</h2>
+      <fieldset class="choices">
+        <legend>Result</legend>
+        <label><input type="radio" name="result" value="confirmed"> Confirmed</label>
+        <label><input type="radio" name="result" value="rejected"> Rejected</label>
+        {% if errors.get('result') %}<em>{{ errors.result }}</em>{% endif %}
+      </fieldset>
+      {{ area('notes', 'Verification note', '', 'At least 10 characters.') }}
+      <button class="btn btn-primary" type="submit">Seal verification</button>
+    </form>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Ownership</h2></div>
+  {% if ownerships %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Owner</th><th>From</th><th>Until</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for item in ownerships %}
+            <tr>
+              <td>{{ item.owner_name }}</td>
+              <td>{{ item.start_date|when }}</td>
+              <td>{{ item.end_date|when }}</td>
+              <td>{{ badge(item.ownership_status) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty"><h2>No ownership period yet</h2><p>Registration writes the first ownership row.</p></div>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Transactions</h2></div>
+  {% if transactions %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>When</th><th>Type</th><th>Official</th><th>Approval</th><th>Ledger hash</th></tr></thead>
+        <tbody>
+          {% for item in transactions %}
+            <tr>
+              <td>{{ item.created_at|when }}</td>
+              <td>{{ item.transaction_type|label }}</td>
+              <td>{{ item.official_name }}</td>
+              <td>{{ item.approval_reference or '—' }}</td>
+              <td><code title="{{ item.blockchain_tx_hash }}">{{ item.blockchain_tx_hash|short_hash }}</code></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty"><h2>No transactions yet</h2><p>A sealed registration appears here.</p></div>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Documents</h2></div>
+  {% if documents %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>When</th><th>Type</th><th>File</th><th>File hash</th></tr></thead>
+        <tbody>
+          {% for item in documents %}
+            <tr>
+              <td>{{ item.uploaded_at|when }}</td>
+              <td>{{ item.document_type|label }}</td>
+              <td><a href="{{ url_for('lands.download_document', document_id=item.id) }}">{{ item.original_name }}</a></td>
+              <td><code title="{{ item.file_hash }}">{{ item.file_hash|short_hash }}</code></td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty"><h2>No documents stored</h2><p>New registrations and legal updates keep the uploaded file with the transaction.</p></div>
+  {% endif %}
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Blocks for this parcel</h2></div>
+  <ol class="chain">
+    {% for block in blocks %}
+      <li>
+        <strong>#{{ block.block_index }} · {{ block.action|label }}</strong>
+        <span>{{ block.created_at|when }}</span>
+        <code title="{{ block.block_hash }}">{{ block.block_hash }}</code>
+      </li>
+    {% else %}
+      <li>No block is linked to this UPI yet.</li>
+    {% endfor %}
+  </ol>
+</section>
+{% endblock %}

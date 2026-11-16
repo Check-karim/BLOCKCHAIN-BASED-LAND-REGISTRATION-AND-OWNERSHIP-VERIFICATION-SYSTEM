@@ -1,0 +1,86 @@
+{% extends "app_layout.html" %}
+{% from "macros.html" import badge, pager with context %}
+{% block title %}{{ 'My land' if current_user.role == 'landowner' else 'Parcels' }}{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Register</p>
+    <h1>{{ 'My land' if current_user.role == 'landowner' else 'Parcels' }}</h1>
+    <p>{{ total }} record{{ '' if total == 1 else 's' }} in this view.</p>
+  </div>
+  {% if current_user.role == 'landowner' %}
+    <a class="btn btn-primary" href="{{ url_for('lands.new_land') }}">Add land</a>
+  {% elif current_user.role == 'official' or current_user.role == 'admin' %}
+    <a class="btn btn-primary" href="{{ url_for('lands.approvals') }}">Approvals</a>
+  {% endif %}
+</header>
+<form class="filters" method="get">
+  <label class="field grow">
+    <span>{{ 'Parcel ID' if current_user.role == 'landowner' else 'Search' }}</span>
+    <input type="text" name="q" value="{{ filters.q }}" placeholder="{{ 'Parcel ID, for example 1/03/07/04/2581' if current_user.role == 'landowner' else 'UPI, title, or owner' }}">
+  </label>
+  <label class="field">
+    <span>District</span>
+    <select name="district">
+      <option value="">All districts</option>
+      {% for province, districts in locations.items() %}
+        <optgroup label="{{ province }}">
+          {% for district in districts %}
+            <option value="{{ district }}" {% if filters.district == district %}selected{% endif %}>{{ district }}</option>
+          {% endfor %}
+        </optgroup>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="field">
+    <span>Status</span>
+    <select name="status">
+      <option value="">Any status</option>
+      {% for status in ['pending_approval', 'registered', 'verified', 'pending_update', 'disputed', 'rejected'] %}
+        <option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status|label }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="field">
+    <span>Use</span>
+    <select name="land_use">
+      <option value="">Any use</option>
+      {% for use in land_uses %}
+        <option value="{{ use }}" {% if filters.land_use == use %}selected{% endif %}>{{ use }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button class="btn btn-primary" type="submit">Filter</button>
+</form>
+{% if lands %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>UPI</th><th>Title</th><th>Owner</th><th>District</th><th>Sector</th><th>Use</th><th>Size</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for land in lands %}
+          <tr>
+            <td><a href="{{ url_for('lands.detail', land_id=land.id) }}">{{ land.upi or 'Awaiting UPI' }}</a></td>
+            <td>{{ land.title_number or '—' }}</td>
+            <td>{{ land.owner_name }}</td>
+            <td>{{ land.district }}</td>
+            <td>{{ land.sector }}</td>
+            <td>{{ land.land_use }}</td>
+            <td>{{ land.size_sqm|sqm }}</td>
+            <td>{{ badge(land.status) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ pager(page, pages, filter_query) }}
+{% else %}
+  <div class="empty">
+    <h2>Nothing matches</h2>
+    <p>{% if current_user.role == 'landowner' %}Add land to submit a parcel for approval.{% else %}Applications from landowners show up under Approvals.{% endif %}</p>
+  </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "public_layout.html" %}
+{% block title %}Land registration{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Ministry of Local Government · Rwanda</p>
+    <h1>Land records with a trail that cannot be quietly rewritten.</h1>
+    <p class="lede">A landowner adds the land. An official approves it, and that approval issues the UPI and the title. The entry is then sealed so a later change stays visible.</p>
+    <div class="hero-actions">
+      {% if current_user %}
+        <a class="btn btn-primary" href="{{ url_for('dashboard.home') }}">Go to your land</a>
+      {% else %}
+        <a class="btn btn-primary" href="{{ url_for('public.register') }}">Open a landowner account</a>
+        <a class="btn btn-ghost" href="{{ url_for('public.login') }}">Log in</a>
+      {% endif %}
+    </div>
+  </div>
+  <article class="ledger-card">
+    <p class="eyebrow">Latest sealed block</p>
+    {% if latest %}
+      <h2>{{ latest.action|label }}</h2>
+      <dl>
+        <div><dt>Block</dt><dd>#{{ latest.block_index }}</dd></div>
+        <div><dt>Record</dt><dd>{{ latest.record_ref or 'Ledger' }}</dd></div>
+        <div><dt>When</dt><dd>{{ latest.created_at|when }}</dd></div>
+        <div><dt>By</dt><dd>{{ latest.actor_name or 'System' }}</dd></div>
+      </dl>
+      <p class="hash" title="{{ latest.block_hash }}">{{ latest.block_hash }}</p>
+    {% else %}
+      <h2>The ledger is ready.</h2>
+      <p>The genesis block is in place. The first registration will be sealed after it.</p>
+    {% endif %}
+  </article>
+</section>
+
+<section class="stat-grid" aria-label="Register totals">
+  <article><strong>{{ stats.parcels }}</strong><span>Parcels on the register</span></article>
+  <article><strong>{{ stats.owners }}</strong><span>Active landowners</span></article>
+  <article><strong>{{ stats.verified }}</strong><span>Verified parcels</span></article>
+  <article><strong>{{ stats.blocks }}</strong><span>Blocks in the chain</span></article>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <p class="eyebrow">Who it is for</p>
+    <h2>Three desks, one register.</h2>
+  </div>
+  <div class="role-grid">
+    <article>
+      <p class="num">01</p>
+      <h3>Landowners</h3>
+      <p>Open your own account and add your land. After an official approves it, the UPI and the title appear on your record.</p>
+    </article>
+    <article>
+      <p class="num">02</p>
+      <h3>Authorized land officials</h3>
+      <p>Approve or reject land a landowner has added. Approval issues the UPI and the title and seals the parcel.</p>
+    </article>
+    <article>
+      <p class="num">03</p>
+      <h3>Administrators</h3>
+      <p>Issue official accounts, follow the audit log, and prepare land management reports. Landowners register themselves. The administrator password stays admin.</p>
+    </article>
+  </div>
+</section>
+
+<section class="section steps-wrap">
+  <div class="section-head">
+    <p class="eyebrow">How a record moves</p>
+    <h2>From a visit to a sealed block.</h2>
+  </div>
+  <ol class="steps">
+    <li><strong>Account</strong><span>A landowner registers with a real name, email, and Rwandan phone number.</span></li>
+    <li><strong>Registration</strong><span>A landowner submits the place, size, and use. An official approves it, and the system then issues the UPI and the title.</span></li>
+    <li><strong>Seal</strong><span>The entry is hashed with the previous block, so a quiet edit breaks the chain.</span></li>
+    <li><strong>Title</strong><span>The landowner opens the parcel and sees the issued UPI and title. The record can be printed or downloaded.</span></li>
+  </ol>
+</section>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "public_layout.html" %}
+{% block title %}About{% endblock %}
+{% block content %}
+<section class="page-intro">
+  <p class="eyebrow">Case study</p>
+  <h1>About this land registry</h1>
+  <p class="lede">Ubutaka is a working prototype for a blockchain-based land registration and ownership verification system, framed as a case study for the Ministry of Local Government (MINALOC) in Rwanda.</p>
+</section>
+
+<div class="prose-grid">
+  <article class="card">
+    <h2>The problem it answers</h2>
+    <p>Paper files and disconnected databases make it hard to see who changed a land record, and when. A buyer, a family, or a sector office can be left with two stories about the same parcel.</p>
+    <p>This system keeps one current register in MySQL and an append-only hash chain beside it. A correction does not erase the earlier entry. It adds a new block that points at the previous one.</p>
+  </article>
+  <article class="card">
+    <h2>What the ledger stores</h2>
+    <p>Each registration, legal update, and ownership verification becomes a block. The block holds the action, the parcel reference, the payload, the time in Kigali, and the hash of the block before it.</p>
+    <p>Administrators and land officers can open the ledger and see whether every hash still agrees. A broken link is visible. Blocks are not edited or deleted from the application.</p>
+  </article>
+  <article class="card">
+    <h2>Who does what</h2>
+    <ul>
+      <li>Landowners open their own account, add their land, and download or print the record after the UPI and title are issued.</li>
+      <li>Authorized land officials approve that land. Approval issues the UPI and the title, then seals the parcel.</li>
+      <li>The administrator issues official accounts, reviews the audit log, and prepares management reports. The predefined login stays admin / admin.</li>
+      <li>MINALOC is outside this demo. Policies are recorded on the MINALOC desk, and land management reports are saved here. There is no connection to a ministry system.</li>
+    </ul>
+  </article>
+  <article class="card">
+    <h2>Rules on the register</h2>
+    <ul>
+      <li>A name cannot contain numbers or special characters.</li>
+      <li>A username cannot contain spaces, and it cannot start with a number or a special character.</li>
+      <li>Email addresses are checked, and phone numbers must be Rwandan mobile numbers.</li>
+      <li>A new password must not be less than 6 characters. The preloaded administrator signs in with the issued password.</li>
+    </ul>
+  </article>
+</div>
+
+<section class="note-band">
+  <h2>What this prototype is</h2>
+  <p>It is a private hash chain inside this application, not a public cryptocurrency and not a substitute for a notarised title deed. MINALOC appears as the authority in the case study, and this copy does not sign in to any MINALOC system.</p>
+</section>
+{% endblock %}

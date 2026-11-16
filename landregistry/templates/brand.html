@@ -1,0 +1,14 @@
+<a class="brand" href="{{ url_for('dashboard.home') if current_user else url_for('public.home') }}">
+  <span class="mark" aria-hidden="true">
+    <svg viewBox="0 0 32 32">
+      <rect x="1" y="1" width="14" height="14"></rect>
+      <rect x="17" y="1" width="14" height="14"></rect>
+      <rect x="1" y="17" width="14" height="14"></rect>
+      <rect x="17" y="17" width="14" height="14"></rect>
+    </svg>
+  </span>
+  <span class="brand-text">
+    <strong>Ubutaka</strong>
+    <small>MINALOC land ledger</small>
+  </span>
+</a>

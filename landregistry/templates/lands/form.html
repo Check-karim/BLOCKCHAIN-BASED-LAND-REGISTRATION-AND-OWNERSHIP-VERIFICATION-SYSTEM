@@ -1,0 +1,80 @@
+{% extends "app_layout.html" %}
+{% from "macros.html" import field, area, select, csrf, location_fields with context %}
+{% block title %}{{ 'Update land' if mode == 'update' else 'Add land' }}{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">{{ 'Legal update' if mode == 'update' else 'New parcel' }}</p>
+    <h1>{{ 'Update a record' if mode == 'update' else 'Add land' }}</h1>
+    <p>
+      {% if mode == 'update' %}
+        The UPI stays as it is. A saved change is sealed into a new block and the parcel returns to pending verification.
+      {% else %}
+        Choose the landowner, enter the parcel, and save. The record is sealed for that person. A supporting document is optional.
+      {% endif %}
+    </p>
+  </div>
+</header>
+{% if errors %}
+  <div class="alert error">{{ errors.get('form') or 'Check the highlighted fields. The register was not changed.' }}</div>
+{% endif %}
+{% if not owners %}
+  <div class="empty"><h2>No landowner accounts</h2><p>A landowner has to register before a parcel can be recorded in their name.</p></div>
+{% endif %}
+<form class="card form-card" method="post" enctype="multipart/form-data" novalidate>
+  {{ csrf() }}
+  <div class="form-grid">
+    {% if mode == 'update' %}
+      <label class="field">
+        <span>UPI</span>
+        <input type="text" name="upi" value="{{ form.get('upi', '') }}" readonly>
+        <small>The parcel identifier stays fixed so the chain can follow it.</small>
+      </label>
+    {% else %}
+      {{ field('upi', 'UPI', form.get('upi', ''), 'text', 'Example: 1/03/07/04/2581') }}
+    {% endif %}
+    {{ field('title_number', 'Title number', form.get('title_number', ''), 'text', 'Start with a letter. Example: LR-2026-1001') }}
+    <label class="field">
+      <span>Landowner</span>
+      <select name="owner_id">
+        <option value="">Select landowner</option>
+        {% for owner in owners %}
+          <option value="{{ owner.id }}" {% if owner.id|string == form.get('owner_id', '')|string %}selected{% endif %}>
+            {{ owner.full_name }} · {{ owner.district }}
+          </option>
+        {% endfor %}
+      </select>
+      {% if mode == 'update' %}<small>Choosing a different person records a transfer.</small>{% endif %}
+      {% if errors.get('owner_id') %}<em>{{ errors.owner_id }}</em>{% endif %}
+    </label>
+    {{ select('land_use', 'Land use', land_uses, form.get('land_use', '')) }}
+    {{ field('size_sqm', 'Size (square metres)', form.get('size_sqm', ''), 'text', 'Example: 450 or 450.5') }}
+    {{ location_fields(form.get('province', ''), form.get('district', '')) }}
+    {{ field('sector', 'Sector', form.get('sector', ''), 'text', 'Letters and spaces only.') }}
+    {{ field('cell', 'Cell', form.get('cell', ''), 'text', 'Letters and spaces only.') }}
+    {{ field('village', 'Village', form.get('village', ''), 'text', 'Letters and spaces only.') }}
+    {{ area('description', 'Description', form.get('description', ''), 'Optional note about the parcel.') }}
+  </div>
+  {% if mode == 'update' %}
+    <h2>Legal basis</h2>
+    <p class="hint-block">An update is accepted only when a legal document requires it. The previous version remains in the ledger.</p>
+    <div class="form-grid">
+      {{ select('legal_basis', 'Legal basis', legal_bases, form.get('legal_basis', '')) }}
+      {{ field('legal_reference', 'Document reference', form.get('legal_reference', ''), 'text', 'Letters, numbers, / or -.') }}
+      {{ area('notes', 'Legal explanation', form.get('notes', ''), 'At least 15 characters.') }}
+    </div>
+  {% endif %}
+  <label class="field">
+    <span>Supporting document</span>
+    <input type="file" name="document" accept=".pdf,.png,.jpg,.jpeg,application/pdf,image/png,image/jpeg">
+    <small>{% if mode == 'update' %}PDF, PNG, or JPG. Up to 5 MB. Required for a legal update.{% else %}Optional. PDF, PNG, or JPG, up to 5 MB.{% endif %}</small>
+    {% if errors.get('document') %}<em>{{ errors.document }}</em>{% endif %}
+  </label>
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit" {% if not owners %}disabled{% endif %}>
+      {{ 'Seal this update' if mode == 'update' else 'Add this land' }}
+    </button>
+    <a class="btn btn-ghost" href="{{ url_for('lands.detail', land_id=land.id) if land else url_for('lands.list_lands') }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

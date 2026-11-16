@@ -1,0 +1,10 @@
+{% extends "public_layout.html" %}
+{% block title %}Form expired{% endblock %}
+{% block content %}
+<section class="page-intro">
+  <p class="eyebrow">400</p>
+  <h1>That form expired.</h1>
+  <p class="lede">Go back, refresh the page, and submit it again.</p>
+  <a class="btn btn-primary" href="{{ url_for('public.home') }}">Home</a>
+</section>
+{% endblock %}

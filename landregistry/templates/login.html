@@ -1,0 +1,30 @@
+{% extends "public_layout.html" %}
+{% from "macros.html" import field, csrf with context %}
+{% block title %}Log in{% endblock %}
+{% block content %}
+<section class="auth-shell">
+  <div class="auth-aside">
+    <p class="eyebrow">Sign in</p>
+    <h1>Return to the register.</h1>
+    <p>Landowners, authorized land officials, and the administrator use the same door. Landowners register themselves. Official accounts are issued by the administrator, whose password stays admin.</p>
+    <details class="demo" open>
+      <summary>Case study accounts</summary>
+      <ul>
+        <li><span>Administrator</span><code>admin</code> / <code>admin</code></li>
+        <li><span>Authorized land official</span><code>mukamana</code> / <code>Officer1</code></li>
+        <li><span>Landowner</span><code>uwase</code> / <code>Uwase123</code></li>
+        <li><span>Landowner</span><code>habimana</code> / <code>Habimana1</code></li>
+      </ul>
+    </details>
+  </div>
+  <form class="auth-panel" method="post" novalidate>
+    {{ csrf() }}
+    <input type="hidden" name="next" value="{{ next_url }}">
+    <h2>Log in</h2>
+    {{ field('username', 'Username', form.get('username', ''), 'text', 'No spaces. The preloaded administrator is admin.', 'username') }}
+    {{ field('password', 'Password', '', 'password', '', 'current-password') }}
+    <button class="btn btn-primary" type="submit">Sign in</button>
+    <p class="form-foot">Need a landowner account? <a href="{{ url_for('public.register') }}">Register</a></p>
+  </form>
+</section>
+{% endblock %}

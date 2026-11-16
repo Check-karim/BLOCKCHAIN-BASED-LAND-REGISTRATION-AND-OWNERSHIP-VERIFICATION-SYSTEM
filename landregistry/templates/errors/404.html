@@ -1,0 +1,9 @@
+{% extends "public_layout.html" %}
+{% block title %}Not found{% endblock %}
+{% block content %}
+<section class="page-intro">
+  <p class="eyebrow">404</p>
+  <h1>That page is not on the register.</h1>
+  <a class="btn btn-primary" href="{{ url_for('public.home') }}">Home</a>
+</section>
+{% endblock %}

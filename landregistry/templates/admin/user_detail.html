@@ -1,0 +1,85 @@
+{% extends "app_layout.html" %}
+{% from "macros.html" import badge, field, csrf with context %}
+{% block title %}{{ account.full_name }}{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Account</p>
+    <h1>{{ account.full_name }}</h1>
+    <p>{{ account.username }} · {{ account.role|label }} · {{ account.email }}</p>
+  </div>
+  {{ badge(account.status) }}
+</header>
+{% if account.role == 'landowner' %}
+<section class="section">
+  <div class="section-head">
+    <h2>Land</h2>
+  </div>
+  {% if parcels %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Parcel ID</th><th>Title</th><th>District</th><th>Use</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for parcel in parcels %}
+            <tr>
+              <td><a href="{{ url_for('lands.detail', land_id=parcel.id) }}">{{ parcel.upi or 'Awaiting UPI' }}</a></td>
+              <td>{{ parcel.title_number or '—' }}</td>
+              <td>{{ parcel.district }}</td>
+              <td>{{ parcel.land_use }}</td>
+              <td>{{ badge(parcel.status) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty"><h2>No land yet</h2><p>The landowner submits a parcel. An official approves it and the UPI and title are issued then.</p></div>
+  {% endif %}
+</section>
+{% endif %}
+<section class="split">
+  <article class="card">
+    <h2>Details</h2>
+    <dl class="kv">
+      <div><dt>Phone</dt><dd>{{ account.phone }}</dd></div>
+      <div><dt>National ID</dt><dd>{{ account.national_id or 'Not recorded' }}</dd></div>
+      <div><dt>Province</dt><dd>{{ account.province or '—' }}</dd></div>
+      <div><dt>District</dt><dd>{{ account.district or '—' }}</dd></div>
+      <div><dt>Created</dt><dd>{{ account.created_at|when }}</dd></div>
+    </dl>
+    {% if duties %}
+      <h3>What this role can do</h3>
+      <ul class="permission-list">
+        {% for duty in duties %}
+          <li>{{ duty }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+    {% if account.username == 'admin' %}
+      <p class="hint-block">The predefined administrator account stays active.</p>
+    {% elif account.id != current_user.id %}
+      <form method="post" action="{{ url_for('admin.user_status', user_id=account.id) }}">
+        {{ csrf() }}
+        <button class="btn {{ 'btn-danger' if account.status == 'active' else 'btn-primary' }}" type="submit">
+          {{ 'Deactivate account' if account.status == 'active' else 'Activate account' }}
+        </button>
+      </form>
+    {% endif %}
+  </article>
+  {% if account.username == 'admin' %}
+    <article class="card">
+      <h2>Password</h2>
+      <p>This is the predefined administrator. The password stays <strong>admin</strong>.</p>
+    </article>
+  {% else %}
+    <form class="card form-card" method="post" action="{{ url_for('admin.user_password', user_id=account.id) }}" novalidate>
+      {{ csrf() }}
+      <h2>Reset password</h2>
+      <p class="hint-block">The replacement password must not be less than 6 characters.</p>
+      {{ field('password', 'New password', '', 'password', 'Must not be less than 6 characters.') }}
+      {{ field('confirm_password', 'Confirm password', '', 'password') }}
+      <button class="btn btn-gold" type="submit">Reset password</button>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

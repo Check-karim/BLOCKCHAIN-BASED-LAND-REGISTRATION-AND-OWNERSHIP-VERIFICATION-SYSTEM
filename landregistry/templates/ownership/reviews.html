@@ -1,0 +1,35 @@
+{% extends "app_layout.html" %}
+{% from "macros.html" import pager with context %}
+{% block title %}Mismatch reviews{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Official review</p>
+    <h1>Flagged mismatches</h1>
+    <p>{{ total }} record{{ '' if total == 1 else 's' }} waiting for a legally approved correction.</p>
+  </div>
+</header>
+{% if current_user.role == 'admin' %}
+  <div class="alert info">You can read this queue. Only an authorized land official can seal the correction.</div>
+{% endif %}
+{% if rows %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>When</th><th>Parcel ID</th><th>Requested by</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ row.created_at|when }}</td>
+            <td>{{ row.parcel_number }}</td>
+            <td>{{ row.requester }}</td>
+            <td><a href="{{ url_for('ownership.review', request_id=row.id) }}">Review</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {{ pager(page, pages) }}
+{% else %}
+  <div class="empty"><h2>Nothing is flagged</h2><p>A mismatch appears here after a landowner requests a check and the hashes differ.</p></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "app_layout.html" %}
+{% block title %}Approvals{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <p class="eyebrow">Official review</p>
+    <h1>Land waiting for approval</h1>
+    <p>A landowner submitted each of these. Approval issues the UPI and the title.</p>
+  </div>
+</header>
+{% if rows %}
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Submitted</th><th>Landowner</th><th>Place</th><th>Use</th><th>Size</th><th></th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ row.created_at|when }}</td>
+            <td>{{ row.owner_name }}</td>
+            <td>{{ row.village }}, {{ row.sector }}, {{ row.district }}</td>
+            <td>{{ row.land_use }}</td>
+            <td>{{ row.size_sqm|sqm }}</td>
+            <td><a href="{{ url_for('lands.detail', land_id=row.id) }}">Review</a></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="empty"><h2>Nothing is waiting</h2><p>New land from a landowner appears here until an official approves or rejects it.</p></div>
+{% endif %}
+{% endblock %}
