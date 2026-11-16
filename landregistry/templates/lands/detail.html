@@ -22,9 +22,6 @@
       <a class="btn btn-ghost" href="{{ url_for('lands.certificate', land_id=land.id) }}">Download extract</a>
       {% if current_user.role == 'official' %}
         <a class="btn btn-primary" href="{{ url_for('lands.update_land', land_id=land.id) }}">Update record</a>
-        {% if open_review %}
-          <a class="btn btn-gold" href="{{ url_for('ownership.review', request_id=open_review.id) }}">Review mismatch</a>
-        {% endif %}
       {% endif %}
     {% endif %}
   </div>
@@ -67,7 +64,7 @@
 {% elif land.upi and comparison %}
   <div class="result-panel mismatch">
     <strong>Hash mismatch.</strong>
-    <p>The current record does not match the hash sealed on the ledger. A landowner can request an official review.</p>
+    <p>The current record does not match the hash sealed for this parcel. An official can update the record when a legal approval requires it.</p>
     {% if seal and seal.body.size_sqm %}
       <p>Sealed size {{ seal.body.size_sqm }} m². Register size {{ land.size_sqm|sqm }}.</p>
     {% endif %}
@@ -116,44 +113,6 @@
       </li>
     {% endfor %}
   </ol>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>Verification</h2></div>
-  {% if verifications %}
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>When</th><th>Result</th><th>Officer</th><th>Notes</th><th>Block</th></tr></thead>
-        <tbody>
-          {% for item in verifications %}
-            <tr>
-              <td>{{ item.created_at|when }}</td>
-              <td>{{ badge(item.result) }}</td>
-              <td>{{ item.officer_name }}</td>
-              <td>{{ item.notes }}</td>
-              <td><code title="{{ item.block_hash }}">{{ item.block_hash|short_hash }}</code></td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  {% else %}
-    <div class="empty"><h2>No verification yet</h2><p>An officer can confirm or dispute this ownership.</p></div>
-  {% endif %}
-  {% if current_user.role == 'official' %}
-    <form class="card form-card" method="post" action="{{ url_for('lands.verify_land', land_id=land.id) }}" novalidate>
-      {{ csrf() }}
-      <h2>Record a verification</h2>
-      <fieldset class="choices">
-        <legend>Result</legend>
-        <label><input type="radio" name="result" value="confirmed"> Confirmed</label>
-        <label><input type="radio" name="result" value="rejected"> Rejected</label>
-        {% if errors.get('result') %}<em>{{ errors.result }}</em>{% endif %}
-      </fieldset>
-      {{ area('notes', 'Verification note', '', 'At least 10 characters.') }}
-      <button class="btn btn-primary" type="submit">Seal verification</button>
-    </form>
-  {% endif %}
 </section>
 
 <section class="section">

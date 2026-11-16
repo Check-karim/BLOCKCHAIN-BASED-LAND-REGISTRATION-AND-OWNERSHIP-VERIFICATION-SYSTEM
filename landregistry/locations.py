@@ -41,14 +41,10 @@ DEMO_MATCH_UPI = "1/03/07/04/2581"
 DEMO_MISMATCH_UPI = "1/02/05/03/9090"
 
 OFFICIAL_DUTIES = [
-    "Register a new land parcel",
-    "Enter the owner and parcel details",
-    "Upload supporting documents",
-    "Validate the submitted information",
+    "Approve or reject land submitted by a landowner",
+    "Approval issues the UPI and the title",
     "Update a land record when a legal approval requires it",
-    "Verify land ownership",
-    "Submit the transaction to the ledger",
-    "View transaction and record history",
+    "View parcel history and download reports",
 ]
 
 ADMIN_DUTIES = [
@@ -58,7 +54,6 @@ ADMIN_DUTIES = [
     "Monitor system activity",
     "Review audit logs",
     "Generate management reports",
-    "Record policies for this demo",
 ]
 
 LANDOWNER_DUTIES = [
@@ -93,5 +88,4 @@ ACTION_LABELS = {
     "resolved": "Resolved",
     "REQUEST_VERIFICATION": "Verification requested",
     "CORRECT_LAND": "Record corrected",
-    "RECORD_POLICY": "Policy recorded",
 }

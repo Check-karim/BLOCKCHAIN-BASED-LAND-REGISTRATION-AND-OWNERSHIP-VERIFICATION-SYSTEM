@@ -14,17 +14,9 @@
       {% if current_user.role == 'official' or current_user.role == 'admin' %}
         <a class="side-link {% if request.endpoint == 'lands.approvals' %}is-active{% endif %}" href="{{ url_for('lands.approvals') }}">Approvals</a>
       {% endif %}
-      {% if current_user.role == 'official' %}
-        <a class="side-link {% if request.endpoint in ['ownership.reviews', 'ownership.review'] %}is-active{% endif %}" href="{{ url_for('ownership.reviews') }}">Review mismatches</a>
-      {% endif %}
       {% if current_user.role == 'admin' %}
         <a class="side-link {% if request.endpoint in ['admin.users', 'admin.new_user', 'admin.user_detail'] %}is-active{% endif %}" href="{{ url_for('admin.users') }}">Users</a>
         <a class="side-link {% if request.endpoint == 'admin.activity' %}is-active{% endif %}" href="{{ url_for('admin.activity') }}">Audit log</a>
-        <a class="side-link {% if request.endpoint == 'ownership.reviews' %}is-active{% endif %}" href="{{ url_for('ownership.reviews') }}">Flagged reviews</a>
-      {% endif %}
-      {% if current_user.role != 'landowner' %}
-        <a class="side-link {% if request.endpoint == 'admin.ledger' %}is-active{% endif %}" href="{{ url_for('admin.ledger') }}">Ledger</a>
-        <a class="side-link {% if request.endpoint == 'admin.minaloc' %}is-active{% endif %}" href="{{ url_for('admin.minaloc') }}">{{ 'MINALOC desk' if current_user.role == 'admin' else 'Policies' }}</a>
       {% endif %}
       <a class="side-link {% if request.endpoint == 'reports.index' %}is-active{% endif %}" href="{{ url_for('reports.index') }}">Reports</a>
       <a class="side-link {% if request.endpoint == 'dashboard.profile' %}is-active{% endif %}" href="{{ url_for('dashboard.profile') }}">Profile</a>

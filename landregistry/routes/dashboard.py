@@ -45,8 +45,7 @@ def home():
             "parcels": _count("SELECT COUNT(*) AS n FROM land_parcels"),
             "owners": _count("SELECT COUNT(*) AS n FROM users WHERE role = 'landowner'"),
             "pending": _count("SELECT COUNT(*) AS n FROM land_parcels WHERE status = 'pending_approval'"),
-            "verified": _count("SELECT COUNT(*) AS n FROM land_parcels WHERE status = 'verified'"),
-            "mismatches": _count("SELECT COUNT(*) AS n FROM verification_requests WHERE outcome = 'mismatch'"),
+            "titled": _count("SELECT COUNT(*) AS n FROM land_parcels WHERE upi IS NOT NULL"),
         }
         recent_lands = query_all(
             """
@@ -58,7 +57,6 @@ def home():
         )
         if user["role"] == "admin":
             stats["users"] = _count("SELECT COUNT(*) AS n FROM users")
-            stats["blocks"] = _count("SELECT COUNT(*) AS n FROM blocks")
             recent_activity = query_all(
                 """
                 SELECT a.created_at, a.action, a.details, u.full_name AS person

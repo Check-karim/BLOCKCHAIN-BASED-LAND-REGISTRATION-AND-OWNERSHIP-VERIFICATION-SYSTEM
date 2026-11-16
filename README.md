@@ -46,9 +46,7 @@ The UPI and title exist only after an official approves the land. A parcel that 
 
 Two sealed demo parcels are already on the register: `1/03/07/04/2581`, and `1/02/05/03/9090` where the sealed size is 800 m² and the register says 960 m². An official can open the second one and seal a correction.
 
-## MINALOC
-
-This demo is not connected to MINALOC systems. The MINALOC desk is where an administrator records policies and authorized instructions, and where a land management report is prepared and stored. Nothing is sent to a ministry system.
+This demo is not connected to a MINALOC system. Records stay in this application.
 
 ## Validation
 

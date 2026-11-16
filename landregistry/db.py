@@ -311,38 +311,6 @@ def _align(connection):
             WHERE t.id IS NULL
             """
         )
-        cursor.execute("SELECT COUNT(*) AS n FROM policies")
-        if cursor.fetchone()["n"] == 0:
-            cursor.execute("SELECT id FROM users WHERE username = 'admin'")
-            admin = cursor.fetchone()
-            if admin:
-                stamp = now_stamp()
-                cursor.execute(
-                    """
-                    INSERT INTO policies (title, reference_code, body, recorded_by, created_at)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (
-                        "Demo boundary",
-                        "DEMO-MINALOC-00",
-                        "This installation is not connected to MINALOC systems. The administrator records policies and authorized instructions here so the case study can show that flow. Nothing on this page is sent to a ministry system.",
-                        admin["id"],
-                        stamp,
-                    ),
-                )
-                cursor.execute(
-                    """
-                    INSERT INTO policies (title, reference_code, body, recorded_by, created_at)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (
-                        "Legal updates require an approval reference",
-                        "INST-REG-01",
-                        "An authorized land official may update a parcel only when a legal approval is cited. The previous ledger entry stays in the chain. A hash mismatch is corrected only after the official reviews the supporting documents.",
-                        admin["id"],
-                        stamp,
-                    ),
-                )
         connection.commit()
     except Exception:
         connection.rollback()

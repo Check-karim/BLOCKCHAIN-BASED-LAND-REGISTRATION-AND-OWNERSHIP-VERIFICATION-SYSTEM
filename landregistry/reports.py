@@ -39,10 +39,6 @@ REPORTS = {
         "title": "Record history",
         "roles": {"admin", "official", "landowner"},
     },
-    "verifications": {
-        "title": "Ownership verification log",
-        "roles": {"admin", "official"},
-    },
     "users": {
         "title": "System users",
         "roles": {"admin"},
@@ -50,10 +46,6 @@ REPORTS = {
     "activity": {
         "title": "Activity log",
         "roles": {"admin"},
-    },
-    "minaloc": {
-        "title": "Land management report",
-        "roles": {"admin", "official"},
     },
 }
 
@@ -63,7 +55,7 @@ def reports_for(role):
 
 
 def status_options(report_name):
-    if report_name in {"parcels", "ownership", "history", "minaloc"}:
+    if report_name in {"parcels", "ownership", "history"}:
         return [
             ("registered", "Registered"),
             ("verified", "Verified"),
@@ -72,8 +64,6 @@ def status_options(report_name):
             ("disputed", "Disputed"),
             ("rejected", "Rejected"),
         ]
-    if report_name == "verifications":
-        return [("confirmed", "Confirmed"), ("rejected", "Rejected")]
     if report_name == "users":
         return [("active", "Active"), ("inactive", "Inactive")]
     return []
@@ -84,7 +74,7 @@ def applicable_filters(report_name, filters):
     allowed = {value for value, _label in status_options(report_name)}
     if cleaned["status"] not in allowed:
         cleaned["status"] = ""
-    if report_name not in {"parcels", "ownership", "minaloc"}:
+    if report_name not in {"parcels", "ownership"}:
         cleaned["land_use"] = ""
     if report_name != "users":
         cleaned["role"] = ""
@@ -185,27 +175,22 @@ def fetch_report(report_name, filters, user, limit=None):
 
 
 def _keys(report_name):
-    if report_name == "minaloc":
-        report_name = "parcels"
     return {
         "parcels": ["upi", "title_number", "owner_name", "national_id", "province", "district", "sector", "cell", "village", "land_use", "size_sqm", "status", "created_at"],
         "ownership": ["upi", "title_number", "owner_name", "national_id", "phone", "email", "district", "sector", "status"],
         "history": ["created_at", "upi", "event_type", "previous_owner", "new_owner", "legal_basis", "legal_reference", "officer", "block_hash"],
-        "verifications": ["created_at", "upi", "owner_name", "result", "officer", "notes", "block_hash"],
         "users": ["full_name", "username", "role", "email", "phone", "national_id", "province", "district", "status", "created_at"],
         "activity": ["created_at", "person", "action", "details", "ip_address"],
     }[report_name]
 
 
 def _query(report_name, filters, user):
-    if report_name in {"parcels", "minaloc"}:
+    if report_name == "parcels":
         return _parcel_query(filters, user, ownership=False)
     if report_name == "ownership":
         return _parcel_query(filters, user, ownership=True)
     if report_name == "history":
         return _history_query(filters, user)
-    if report_name == "verifications":
-        return _verification_query(filters, user)
     if report_name == "users":
         return _user_query(filters)
     return _activity_query(filters)
@@ -295,36 +280,6 @@ def _history_query(filters, user):
         JOIN users a ON a.id = e.actor_id
         {_where(clauses)}
         ORDER BY e.created_at DESC, e.id DESC
-    """
-    return headers, sql, params
-
-
-def _verification_query(filters, user):
-    clauses, params = [], []
-    if user["role"] == "landowner":
-        clauses.append("l.owner_id = %s")
-        params.append(user["id"])
-    if filters["province"]:
-        clauses.append("l.province = %s")
-        params.append(filters["province"])
-    if filters["district"]:
-        clauses.append("l.district = %s")
-        params.append(filters["district"])
-    if filters["status"] in {"confirmed", "rejected"}:
-        clauses.append("v.result = %s")
-        params.append(filters["status"])
-    _dates(clauses, params, "v.created_at", filters)
-    _search(clauses, params, "(l.upi LIKE %s OR u.full_name LIKE %s OR v.notes LIKE %s)", filters["q"])
-    headers = ["Date", "UPI", "Owner", "Result", "Officer", "Notes", "Block"]
-    sql = f"""
-        SELECT v.created_at, l.upi, u.full_name AS owner_name, v.result,
-               o.full_name AS officer, v.notes, v.block_hash
-        FROM verifications v
-        JOIN land_parcels l ON l.id = v.land_id
-        JOIN users u ON u.id = l.owner_id
-        JOIN users o ON o.id = v.official_id
-        {_where(clauses)}
-        ORDER BY v.created_at DESC, v.id DESC
     """
     return headers, sql, params
 

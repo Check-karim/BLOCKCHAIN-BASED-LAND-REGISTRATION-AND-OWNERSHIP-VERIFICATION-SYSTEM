@@ -119,14 +119,12 @@ def create_app():
     from .routes.admin import bp as admin_bp
     from .routes.dashboard import bp as dashboard_bp
     from .routes.lands import bp as lands_bp
-    from .routes.ownership import bp as ownership_bp
     from .routes.public import bp as public_bp
     from .routes.reports import bp as reports_bp
 
     app.register_blueprint(public_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(lands_bp)
-    app.register_blueprint(ownership_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(reports_bp)
 

@@ -12,7 +12,7 @@
       {% elif current_user.role == 'official' %}
         Approve land submitted by landowners. Approval issues the UPI and the title.
       {% else %}
-        Issue official accounts, review the audit log, and prepare reports for the MINALOC desk. Landowners register themselves.
+        Issue official accounts, review the audit log, and prepare reports. Landowners register themselves.
       {% endif %}
     </p>
   </div>
@@ -20,7 +20,7 @@
 
 {% if current_user.role == 'admin' %}
   <div class="alert {{ 'success' if chain_ok else 'error' }}">
-    {% if chain_ok %}The ledger chain agrees from the genesis block through the latest seal.{% else %}The ledger chain is broken. Open the ledger and inspect the hashes.{% endif %}
+    {% if chain_ok %}The sealed records still agree from the first block through the latest one.{% else %}The sealed records no longer agree. A later block does not match the one before it.{% endif %}
   </div>
 {% endif %}
 
@@ -33,13 +33,11 @@
     <article><strong>{{ stats.area|sqm }}</strong><span>Combined area</span></article>
   {% else %}
     <article><strong>{{ stats.parcels }}</strong><span>Parcels</span></article>
-    <article><strong>{{ stats.verified }}</strong><span>Verified</span></article>
     <article><strong>{{ stats.pending }}</strong><span>Waiting for approval</span></article>
-    <article><strong>{{ stats.mismatches }}</strong><span>Flagged mismatches</span></article>
+    <article><strong>{{ stats.titled }}</strong><span>Titles issued</span></article>
     <article><strong>{{ stats.owners }}</strong><span>Landowner accounts</span></article>
     {% if current_user.role == 'admin' %}
       <article><strong>{{ stats.users }}</strong><span>All users</span></article>
-      <article><strong>{{ stats.blocks }}</strong><span>Blocks</span></article>
     {% endif %}
   {% endif %}
 </section>

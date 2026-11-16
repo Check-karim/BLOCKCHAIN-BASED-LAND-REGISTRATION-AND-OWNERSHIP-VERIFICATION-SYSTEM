@@ -1,11 +1,8 @@
-import re
-
 from flask import Blueprint, abort, flash, g, redirect, render_template, request, url_for
-from mysql.connector import IntegrityError
 from werkzeug.security import generate_password_hash
 
 from ..auth import filter_query, page_window, roles_required
-from ..blockchain import now_stamp, verify_chain
+from ..blockchain import now_stamp
 from ..db import execute, log_activity, query_all, query_one
 from ..locations import ADMIN_DUTIES, LANDOWNER_DUTIES, OFFICIAL_DUTIES
 from ..routes.public import _conflicts
@@ -202,91 +199,6 @@ def activity():
         filter_query=filter_query(),
         query=query,
     )
-
-
-@bp.get("/ledger")
-@roles_required("admin", "official")
-def ledger():
-    blocks = query_all(
-        """
-        SELECT b.*, u.full_name AS actor_name
-        FROM blocks b
-        LEFT JOIN users u ON u.id = b.actor_id
-        ORDER BY b.block_index ASC
-        """
-    )
-    valid, broken = verify_chain(blocks)
-    return render_template("admin/ledger.html", blocks=list(reversed(blocks)), valid=valid, broken=broken)
-
-
-@bp.route("/minaloc", methods=["GET", "POST"])
-@roles_required("admin", "official")
-def minaloc():
-    if request.method == "POST" and g.user["role"] != "admin":
-        abort(403)
-    errors = {}
-    form = {}
-    if request.method == "POST":
-        form = request.form
-        errors, cleaned = _policy_fields(form)
-        if not errors:
-            try:
-                execute(
-                    """
-                    INSERT INTO policies (title, reference_code, body, recorded_by, created_at)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (
-                        cleaned["title"],
-                        cleaned["reference_code"],
-                        cleaned["body"],
-                        g.user["id"],
-                        now_stamp(),
-                    ),
-                )
-            except IntegrityError:
-                errors["reference_code"] = "That reference is already recorded."
-            else:
-                log_activity(
-                    "RECORD_POLICY",
-                    f"Recorded policy {cleaned['reference_code']}.",
-                    g.user["id"],
-                    entity_type="policy",
-                )
-                flash("The instruction is recorded in this demo. It is not sent to MINALOC.", "success")
-                return redirect(url_for("admin.minaloc"))
-    policies = query_all(
-        """
-        SELECT p.*, u.full_name AS recorder
-        FROM policies p
-        JOIN users u ON u.id = p.recorded_by
-        ORDER BY p.created_at DESC, p.id DESC
-        """
-    )
-    saved = query_all(
-        """
-        SELECT r.*, u.full_name AS author
-        FROM reports r
-        JOIN users u ON u.id = r.generated_by
-        ORDER BY r.generated_at DESC, r.id DESC
-        LIMIT 8
-        """
-    )
-    return render_template("admin/minaloc.html", policies=policies, saved=saved, errors=errors, form=form)
-
-
-def _policy_fields(form):
-    title = " ".join((form.get("title") or "").split())
-    reference = (form.get("reference_code") or "").strip().upper()
-    body = " ".join((form.get("body") or "").split())
-    errors = {}
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9 ,.'/-]{3,119}", title):
-        errors["title"] = "Enter a title using letters, numbers, and simple punctuation."
-    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9/-]{2,39}", reference):
-        errors["reference_code"] = "Use letters, numbers, / or -."
-    if len(body) < 20 or len(body) > 1000:
-        errors["body"] = "The instruction must be between 20 and 1000 characters."
-    return errors, {"title": title, "reference_code": reference, "body": body}
 
 
 def _parcels_for(account):

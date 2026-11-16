@@ -216,57 +216,6 @@ def update_land(land_id):
     return render_template("lands/form.html", mode="update", errors=errors, form=form, owners=owners, land=land)
 
 
-@bp.post("/lands/<int:land_id>/verify")
-@roles_required("official")
-def verify_land(land_id):
-    land = _land_or_404(land_id)
-    if not land["upi"]:
-        flash("Ownership can be checked after the UPI and title are issued.", "error")
-        return redirect(url_for("lands.detail", land_id=land["id"]))
-    result = (request.form.get("result") or "").strip()
-    errors = {}
-    if result not in {"confirmed", "rejected"}:
-        errors["result"] = "Choose a verification result."
-    note_error, notes = validate_notes(request.form.get("notes"), minimum=10, label="The verification note")
-    if note_error:
-        errors["notes"] = note_error
-    if errors:
-        flash("The verification was not recorded.", "error")
-        return render_template("lands/detail.html", land=land, errors=errors, **_bundle(land))
-    status = "verified" if result == "confirmed" else "disputed"
-    stamp = now_stamp()
-    with db_cursor() as cursor:
-        digest = add_block(
-            cursor,
-            "ownership_verified",
-            {"upi": land["upi"], "result": result, "land_id": land["id"]},
-            actor_id=g.user["id"],
-            record_ref=land["upi"],
-        )
-        cursor.execute(
-            """
-            INSERT INTO verifications (land_id, official_id, result, notes, block_hash, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            """,
-            (land["id"], g.user["id"], result, notes, digest, stamp),
-        )
-        insert_transaction(cursor, land["id"], g.user["id"], "ownership_verified", result, stamp, digest)
-        cursor.execute(
-            "UPDATE land_parcels SET status = %s, updated_at = %s WHERE id = %s",
-            (status, stamp, land["id"]),
-        )
-        log_activity(
-            "VERIFY_LAND",
-            f"{result} ownership for {land['upi']}.",
-            g.user["id"],
-            cursor,
-            entity_type="land_parcel",
-            entity_id=land["id"],
-        )
-    flash("Ownership verification is now part of the ledger.", "success")
-    return redirect(url_for("lands.detail", land_id=land["id"]))
-
-
 @bp.get("/lands/<int:land_id>/certificate")
 @roles_required("admin", "official", "landowner")
 def certificate(land_id):
@@ -366,16 +315,6 @@ def _bundle(land):
         """,
         (land["id"],),
     )
-    verifications = query_all(
-        """
-        SELECT v.*, u.full_name AS officer_name
-        FROM verifications v
-        JOIN users u ON u.id = v.official_id
-        WHERE v.land_id = %s
-        ORDER BY v.created_at DESC, v.id DESC
-        """,
-        (land["id"],),
-    )
     blocks = query_all(
         "SELECT block_index, action, block_hash, previous_hash, created_at FROM blocks WHERE record_ref = %s ORDER BY block_index ASC",
         (land["upi"],),
@@ -410,24 +349,14 @@ def _bundle(land):
         """,
         (land["id"],),
     )
-    open_review = query_one(
-        """
-        SELECT id FROM verification_requests
-        WHERE parcel_id = %s AND outcome = 'mismatch'
-        ORDER BY created_at DESC LIMIT 1
-        """,
-        (land["id"],),
-    )
     return {
         "events": events,
-        "verifications": verifications,
         "blocks": blocks,
         "documents": documents,
         "transactions": transactions,
         "ownerships": ownerships,
         "comparison": compare_land(land, chain_record_hash(land["upi"])) if land.get("upi") else None,
         "seal": latest_seal(land["upi"]) if land.get("upi") else None,
-        "open_review": open_review,
     }
 
 
